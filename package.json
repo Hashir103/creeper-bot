@@ -4,14 +4,18 @@
   "description": "",
   "main": "main.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node deploy-commands.js && node main.js"
   },
   "author": "Hashir",
   "license": "ISC",
   "dependencies": {
+    "@discordjs/opus": "^0.9.0",
     "@discordjs/voice": "^0.17.0",
+    "automake": "^0.1.4",
     "discord.js": "^14.15.3",
     "dotenv": "^16.4.5",
+    "libsodium": "^0.7.13",
     "libsodium-wrappers": "^0.7.13"
   }
 }
