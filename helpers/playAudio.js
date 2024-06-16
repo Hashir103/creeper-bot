@@ -1,23 +1,6 @@
-const { createAudioPlayer, createAudioResource, joinVoiceChannel, VoiceConnectionStatus, AudioPlayerStatus } = require('@discordjs/voice');
-const { entersState } = require('@discordjs/voice');
-const path = require('path');
-
-async function playAudio(connection, filePath) {
-    const player = createAudioPlayer();
-    const resource = createAudioResource(filePath);
-
-    connection.subscribe(player);
-    player.play(resource);
-
-    return entersState(player, AudioPlayerStatus.Playing, 5e3)
-        .then(() => {
-            return entersState(player, AudioPlayerStatus.Idle, 30e3);
-        })
-        .catch(error => {
-            console.error(error);
-            player.stop();
-        });
-}
+const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, VoiceConnectionStatus } = require('@discordjs/voice');
+const ytdl = require('ytdl-core');
+const fs = require('fs');
 
 function joinChannel(channel) {
     return joinVoiceChannel({
@@ -27,4 +10,74 @@ function joinChannel(channel) {
     });
 }
 
-module.exports = { playAudio, joinChannel };
+// Function to play audio from a local .mp3 file
+async function playAudioFromMp3(channel, mp3FilePath) {
+    try {
+        const connection = joinVoiceChannel({
+            channelId: channel.id,
+            guildId: channel.guild.id,
+            adapterCreator: channel.guild.voiceAdapterCreator,
+        });
+
+        const stream = fs.createReadStream(mp3FilePath);
+        const resource = createAudioResource(stream);
+        const player = createAudioPlayer();
+
+        player.play(resource);
+        connection.subscribe(player);
+
+        return new Promise((resolve, reject) => {
+            player.on('stateChange', (oldState, newState) => {
+                if (newState.status === 'idle') {
+                    connection.destroy();
+                    resolve();
+                }
+            });
+
+            player.on('error', (error) => {
+                console.error('Error playing audio:', error);
+                connection.destroy();
+                reject(error);
+            });
+        });
+    } catch (error) {
+        console.error('Error joining voice channel:', error);
+        throw error;
+    }
+}
+
+async function playAudioFromUrl(connection, url) {
+    try {
+        const stream = ytdl(url, { filter: 'audioonly', quality: 'highestaudio' });
+        const resource = createAudioResource(stream);
+        const player = createAudioPlayer();
+
+        connection.subscribe(player);
+        player.play(resource);
+
+        return new Promise((resolve, reject) => {
+            player.on(AudioPlayerStatus.Idle, () => {
+                // need to implement a queue system to play multiple songs instead of just one
+                connection.destroy();
+                resolve();
+            });
+
+            player.on('error', error => {
+                console.error('Error playing audio:', error);
+                connection.destroy();
+                reject(error);
+            });
+        });
+
+    } catch (error) {
+        console.error('Error playing audio:', error);
+        connection.destroy();
+        throw error;
+    }
+}
+
+module.exports = {
+    joinChannel,
+    playAudioFromUrl,
+    playAudioFromMp3,
+};
