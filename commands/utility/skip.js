@@ -1,5 +1,6 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
 const { getVoiceConnection } = require('@discordjs/voice');
+const audioQueue = require('../../helpers/queueClass');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -15,9 +16,8 @@ module.exports = {
         if (connection.state.subscription.player.state.status === 'idle') {
             return interaction.reply('There is no song playing!');
         }
-
+        const song = audioQueue.getQueue()[0];
         connection.state.subscription.player.stop(); // This triggers the player.on(AudioPlayerStatus.Idle)
-
-        await interaction.reply('Skipped the current song!');
+        await interaction.reply(`Skipped ${song}!`);
     }
 };

@@ -2,6 +2,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { Client, Collection, Events, GatewayIntentBits } = require('discord.js');
+const audioQueue = require('./helpers/queueClass');
 
 require('dotenv').config();
 const token  = process.env.token;
@@ -38,6 +39,7 @@ for (const folder of commandFolders) {
 // It makes some properties non-nullable.
 client.once(Events.ClientReady, async readyClient => {
 	console.log(`Logged in as ${readyClient.user.tag}`);
+	client.user.setPresence({activities: [{name: "some jams!"}],status: 'online' });
 });
 
 client.on(Events.InteractionCreate, async interaction => {
@@ -59,6 +61,14 @@ client.on(Events.InteractionCreate, async interaction => {
 		} else {
 			await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
 		}
+	}
+});
+
+audioQueue.on('queueUpdated', () => {
+	if (audioQueue.isEmpty()) {
+		client.user.setPresence({activities: [{name: "some jams!"}],status: 'online' });
+	} else {
+		client.user.setPresence({ activities: [{ name: `(1/${audioQueue.getQueue().length}) ${audioQueue.getQueue()[0]}` }], status: 'dnd' });
 	}
 });
 

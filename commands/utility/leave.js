@@ -2,6 +2,7 @@ const { SlashCommandBuilder } = require('@discordjs/builders');
 const { getVoiceConnection } = require('@discordjs/voice');
 const { playAudioFromMp3 } = require('../../helpers/playAudio');
 const path = require('path');
+const audioQueue = require('../../helpers/queueClass');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -14,7 +15,8 @@ module.exports = {
         if (connection) {
             try {
                 const channel = interaction.member.voice.channel;
-
+                audioQueue.fullClear(); // Clear the queue
+                
                 // Check if there is an active player playing audio
                 if (connection.state.subscription) {
                     await interaction.editReply('Stopping current playback...');

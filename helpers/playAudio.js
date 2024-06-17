@@ -61,6 +61,7 @@ async function playAudioFromUrl(connection, url) {
             if (nextUrl) {
                 await playAudioFromUrl(connection, nextUrl);
             } else {
+                audioQueue.emitQueueStatusUpdate();
                 connection.destroy();
             }
         });
