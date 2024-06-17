@@ -2,6 +2,7 @@ const { SlashCommandBuilder } = require('@discordjs/builders');
 const { joinChannel, playAudioFromUrl } = require('../../helpers/playAudio');
 const { searchYouTube } = require('../../helpers/youtubeSearch');
 const { ActionRowBuilder, StringSelectMenuBuilder } = require('discord.js');
+const audioQueue = require('../../helpers/queueClass');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -57,14 +58,18 @@ module.exports = {
 
             if (channel) {
                 const connection = joinChannel(channel);
-                await interaction.editReply({
-                    content: `Playing video: ${selected.title}`,
-                    components: []});
-
-                await playAudioFromUrl(connection, url);
-
-                await interaction.editReply('Finished playing video!');
-
+                // Add URL to the queue
+                audioQueue.add(url, selected.title);
+                if (audioQueue.getQueue().length === 1) {
+                    // If the queue was empty before adding, start playing
+                    await playAudioFromUrl(connection, url);
+                    await interaction.editReply({
+                        content: `Playing audio: ${selected.title}`,
+                        components: []
+                    });
+                } else {
+                    await interaction.editReply({content:`Added ${selected.title} to the queue.`, components: []});
+                }
             } else {
                 await interaction.editReply('You need to join a voice channel first!');
             }

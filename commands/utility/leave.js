@@ -26,7 +26,7 @@ module.exports = {
                     const audioPath = path.join(__dirname, '../../resources/creeper.mp3');
                     await playAudioFromMp3(channel, audioPath);
                 } else {
-                    console.log('User is not in a voice channel.');
+                    await interaction.editReply('Not in a voice channel!');
                 }
                 
                 await interaction.editReply('Left the voice channel!');

@@ -1,6 +1,7 @@
 const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, VoiceConnectionStatus } = require('@discordjs/voice');
 const ytdl = require('ytdl-core');
 const fs = require('fs');
+const audioQueue = require('./queueClass'); // Import the queue
 
 function joinChannel(channel) {
     return joinVoiceChannel({
@@ -55,18 +56,18 @@ async function playAudioFromUrl(connection, url) {
         connection.subscribe(player);
         player.play(resource);
 
-        return new Promise((resolve, reject) => {
-            player.on(AudioPlayerStatus.Idle, () => {
-                // need to implement a queue system to play multiple songs instead of just one
+        player.on(AudioPlayerStatus.Idle, async () => {
+            const nextUrl = audioQueue.getNext();
+            if (nextUrl) {
+                await playAudioFromUrl(connection, nextUrl);
+            } else {
                 connection.destroy();
-                resolve();
-            });
+            }
+        });
 
-            player.on('error', error => {
-                console.error('Error playing audio:', error);
-                connection.destroy();
-                reject(error);
-            });
+        player.on('error', error => {
+            console.error('Error playing audio:', error);
+            connection.destroy();
         });
 
     } catch (error) {
