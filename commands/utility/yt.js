@@ -1,7 +1,7 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
 const { joinChannel, playAudioFromUrl } = require('../../helpers/playAudio');
 const { searchYouTube } = require('../../helpers/youtubeSearch');
-const { ActionRowBuilder, StringSelectMenuBuilder } = require('discord.js');
+const { ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const audioQueue = require('../../helpers/queueClass');
 
 module.exports = {
@@ -25,7 +25,7 @@ module.exports = {
                 return interaction.editReply('No results found!');
             }
 
-            const row = new ActionRowBuilder().addComponents(
+            const selectMenuRow = new ActionRowBuilder().addComponents(
                 new StringSelectMenuBuilder()
                     .setCustomId('select')
                     .setPlaceholder('Select a video')
@@ -36,22 +36,37 @@ module.exports = {
                     })))
             );
 
+            const cancelButtonRow = new ActionRowBuilder().addComponents(
+                new ButtonBuilder()
+                    .setCustomId('cancel')
+                    .setLabel('Cancel')
+                    .setStyle(ButtonStyle.Danger)
+            );
+
             await interaction.editReply({
-                content: 'Select a video to play:',
-                components: [row]
+                content: 'Select a video to play or cancel:',
+                components: [selectMenuRow, cancelButtonRow]
             });
 
-            // Wait for user to interact with the select menu
-            const filter = i => i.customId === 'select' && i.user.id === interaction.user.id;
+            // Wait for user to interact with the select menu or the cancel button
+            const filter = i => (i.customId === 'select' || i.customId === 'cancel') && i.user.id === interaction.user.id;
             const collected = await interaction.channel.awaitMessageComponent({ filter, time: 15000 });
 
             if (!collected) {
                 return interaction.editReply('No selection made, command canceled.');
             }
 
+            if (collected.customId === 'cancel') {
+                return interaction.editReply({
+                    content: 'Search canceled.',
+                    components: []
+                
+                });
+            }
+
             const url = collected.values[0];
 
-            // match url with selection to get title
+            // Match url with selection to get title
             const selected = results.find(result => result.url === url);
 
             const { channel } = interaction.member.voice;
@@ -68,7 +83,10 @@ module.exports = {
                         components: []
                     });
                 } else {
-                    await interaction.editReply({content:`Added ${selected.title} to the queue.`, components: []});
+                    await interaction.editReply({
+                        content: `Added ${selected.title} to the queue.`,
+                        components: []
+                    });
                 }
             } else {
                 await interaction.editReply('You need to join a voice channel first!');
