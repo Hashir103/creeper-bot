@@ -62,19 +62,18 @@ async function playAudioFromUrl(connection, url) {
                 await playAudioFromUrl(connection, nextUrl);
             } else {
                 audioQueue.emitQueueStatusUpdate();
-                connection.destroy();
             }
+            return "OK";
         });
 
         player.on('error', error => {
-            console.error('Error playing audio:', error);
-            connection.destroy();
+            console.log('Error playing audio:', error);
+            return error;
         });
 
     } catch (error) {
         console.error('Error playing audio:', error);
-        connection.destroy();
-        throw error;
+        return error;
     }
 }
 

@@ -77,11 +77,15 @@ module.exports = {
                 audioQueue.add(url, selected.title);
                 if (audioQueue.getQueue().length === 1) {
                     // If the queue was empty before adding, start playing
-                    await playAudioFromUrl(connection, url);
-                    await interaction.editReply({
-                        content: `Playing audio: ${selected.title}`,
-                        components: []
-                    });
+                    if (await playAudioFromUrl(connection, url) == 'OK') {
+                        await interaction.editReply({
+                            content: `Playing audio: ${selected.title}`,
+                            components: []
+                        });
+                    }
+                    else {
+                        await interaction.editReply({content:'An error occurred. ', components: [] });
+                    }
                 } else {
                     await interaction.editReply({
                         content: `Added ${selected.title} to the queue.`,
@@ -94,7 +98,9 @@ module.exports = {
 
         } catch (error) {
             console.error(error);
-            await interaction.editReply('An error occurred while processing your request.');
+            await interaction.editReply({
+                content:'Ran out of time',
+                components: []});
         }
     }
 };
