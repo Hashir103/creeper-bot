@@ -90,3 +90,5 @@ lerna-debug.log
 # System Files
 .DS_Store
 Thumbs.db
+# the bot's own state
+data/

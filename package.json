@@ -1,25 +1,21 @@
 {
   "name": "creeper-bot",
-  "version": "1.0.0",
-  "description": "",
+  "version": "2.0.0",
+  "description": "Discord bot that mirrors the Public Radio Project: live status, fun stats and admin tools",
   "main": "main.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node --test",
+    "deploy-commands": "node deploy-commands.js",
     "start": "node deploy-commands.js && node main.js"
   },
   "author": "Hashir",
   "license": "ISC",
+  "engines": {
+    "node": ">=18.17"
+  },
   "dependencies": {
-    "@discordjs/opus": "^0.9.0",
-    "@discordjs/voice": "^0.17.0",
-    "automake": "^0.1.4",
     "discord.js": "^14.15.3",
     "dotenv": "^16.4.5",
-    "ffmpeg-static": "^5.2.0",
-    "libsodium": "^0.7.13",
-    "libsodium-wrappers": "^0.7.13",
-    "youtube-search-api": "^1.2.1",
-    "ytdl-core": "^4.11.5",
-    "ytdl-core-discord": "^1.3.1"
+    "ws": "^8.18.0"
   }
 }
