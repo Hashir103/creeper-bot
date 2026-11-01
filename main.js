@@ -45,9 +45,11 @@ async function sendTo(channelId, text) {
 client.once(Events.ClientReady, (readyClient) => {
 	console.log(`Logged in as ${readyClient.user.tag}`);
 	const store = createStore();
+	// Two channels: the updates channel is what listeners see (the live now-playing
+	// message); the alerts channel is for the people running the radio: outages,
+	// the pull request and code-update feed, and who ran what with /dev.
 	const alertsSend = (text) => sendTo(config.alertsChannelId, text).catch((error) => console.warn('[alerts]', error.message));
-	const updatesSend = (text) => sendTo(config.updatesChannelId, text).catch((error) => console.warn('[updates]', error.message));
-	ctx.setAnnouncer(updatesSend);
+	ctx.setAnnouncer(alertsSend);
 
 	const presence = createPresence({ client, radio: ctx.radio });
 	const status = createStatusMessage({ client, channelId: config.updatesChannelId, radio: ctx.radio, store, radioUrl: config.radioUrl });
@@ -58,8 +60,8 @@ client.once(Events.ClientReady, (readyClient) => {
 	const tailer = createTailer({ djDir: config.djDir, onEntry: (entry) => alerts.handle(entry) });
 	every('logs', config.logEveryMs, async () => tailer.poll());
 
-	const github = createGithubWatcher({ run: ctx.run, repo: config.githubRepo, store, send: updatesSend });
-	const deploys = createDeployWatcher({ run: ctx.run, djDir: config.djDir, store, send: updatesSend });
+	const github = createGithubWatcher({ run: ctx.run, repo: config.githubRepo, store, send: alertsSend });
+	const deploys = createDeployWatcher({ run: ctx.run, djDir: config.djDir, store, send: alertsSend });
 	every('github', config.githubEveryMs, () => github.poll());
 	every('deploys', 60 * 1000, () => deploys.poll());
 });
