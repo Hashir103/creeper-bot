@@ -1,15 +1,20 @@
 const { ActivityType } = require('discord.js');
-const { statusText, formatScore } = require('./format');
-const { boardEntry } = require('./radio');
+const { statusText } = require('./format');
 
 const RADIO_NAME = 'The Public Radio Project';
-const ADDED_IN_SPOTIFY = 'Added in Spotify';
 
-// The bot's own "Listening to" status, with the same song data the desktop app
-// puts on a listener's profile. Discord only lets a bot set the activity's name
-// and one line of state (no album art, progress bar or buttons), so the song is
-// the name and "by Artist · Added by …" is the state; the live status message
-// carries the rest.
+// "A, B, C" becomes "A +2": the status has room for one short line.
+function leadArtist(artist) {
+  const names = String(artist || '').split(',').map((name) => name.trim()).filter(Boolean);
+  if (!names.length) return '';
+  return names.length > 1 ? `${names[0]} +${names.length - 1}` : names[0];
+}
+
+// The bot's own "Listening to" status. Discord only lets a bot set the
+// activity's name and one line of state (no album art, progress bar or buttons;
+// the desktop app gets those because it sets the status on a person's own
+// account), so it is kept to the song and its lead artist. Who added it, the
+// progress and the rest are in the live status message.
 function buildPresence(snapshot) {
   if (!snapshot) {
     return { status: 'dnd', activities: [{ type: ActivityType.Watching, name: 'the radio (not answering)' }] };
@@ -21,15 +26,10 @@ function buildPresence(snapshot) {
   if (!track || !track.isPlaying) {
     return { status: 'idle', activities: [{ type: ActivityType.Listening, name: RADIO_NAME, state: track ? 'Paused' : 'Nothing playing' }] };
   }
-  const adder = track.addedBy ? boardEntry(snapshot, track.addedBy) : null;
-  // What the radio calls songs someone started straight in Spotify; not a person.
-  const who = track.addedBy === ADDED_IN_SPOTIFY
-    ? 'added in Spotify'
-    : track.addedBy ? `added by ${track.addedBy}${adder ? ` (🏆 #${adder.rank} · ${formatScore(adder.score)})` : ''}` : '';
-  const state = [track.artist ? `by ${track.artist}` : '', who].filter(Boolean).join(' · ');
+  const artist = leadArtist(track.artist);
   return {
     status: 'online',
-    activities: [{ type: ActivityType.Listening, name: statusText(track.title) || RADIO_NAME, state: statusText(state) }]
+    activities: [{ type: ActivityType.Listening, name: statusText(track.title) || RADIO_NAME, state: artist ? statusText(`by ${artist}`) : undefined }]
   };
 }
 

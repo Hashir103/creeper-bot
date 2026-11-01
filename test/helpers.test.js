@@ -77,15 +77,17 @@ test('the now playing card carries the song, who added it, the speaker and what 
   assert.equal(buildNowEmbed(snapshot({ hostDeviceOnline: false })).toJSON().fields.find((entry) => entry.name === 'Speaker').value, '🔴 offline');
 });
 
-test('the bot\'s status says the same things the desktop app shows', () => {
+test('the bot\'s status is the song and its lead artist, kept short', () => {
   const playing = buildPresence(snapshot());
   assert.equal(playing.status, 'online');
   assert.equal(playing.activities[0].type, 2, 'Listening');
   assert.equal(playing.activities[0].name, 'Showdown');
-  assert.equal(playing.activities[0].state, 'by Flummoxed Buffer · added by jackie (🏆 #2 · +37)');
+  assert.equal(playing.activities[0].state, 'by Flummoxed Buffer', 'just the artist: who added it is in the live card');
 
-  assert.equal(buildPresence(snapshot({ track: { ...snapshot().track, addedBy: null } })).activities[0].state, 'by Flummoxed Buffer');
-  assert.equal(buildPresence(snapshot({ track: { ...snapshot().track, addedBy: 'Added in Spotify' } })).activities[0].state, 'by Flummoxed Buffer · added in Spotify');
+  const state = (artist) => buildPresence(snapshot({ track: { ...snapshot().track, artist } })).activities[0].state;
+  assert.equal(state('Dina El Wedidi, Mazaher'), 'by Dina El Wedidi +1');
+  assert.equal(state('A, B, C'), 'by A +2');
+  assert.equal(state(''), undefined, 'no artist, no second line');
   const paused = buildPresence(snapshot({ track: { ...snapshot().track, isPlaying: false } }));
   assert.deepEqual([paused.status, paused.activities[0].name, paused.activities[0].state], ['idle', RADIO_NAME, 'Paused']);
   assert.equal(buildPresence(snapshot({ track: null })).activities[0].state, 'Nothing playing');
