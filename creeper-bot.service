@@ -1,0 +1,18 @@
+[Unit]
+Description=Creeper bot: Discord mirror of the Public Radio Project
+After=network-online.target dj.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/creeper-bot
+Environment=PATH=/home/ubuntu/.nvm/versions/node/v20.19.5/bin:/usr/local/bin:/usr/bin:/bin
+# Registers the slash commands first; a failure there doesn't stop the bot.
+ExecStartPre=-/home/ubuntu/.nvm/versions/node/v20.19.5/bin/node deploy-commands.js
+ExecStart=/home/ubuntu/.nvm/versions/node/v20.19.5/bin/node main.js
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
